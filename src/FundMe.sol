@@ -21,7 +21,7 @@
 // external & public view & pure functions
 
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.28;
 
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {PriceConverter} from "./PriceConverter.sol";
@@ -29,38 +29,60 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 error FundMe__NotOwner();
 error FundMe__SpendMoreEth();
+error FundMe__WithdrawFailed();
+error FundMe__NoFundsToWithdraw();
 
-contract FundMe is Ownable{
+contract FundMe is Ownable {
     using PriceConverter for uint256;
 
-    mapping(address => uint256) private s_addressToAmountFunded;
-    address[] private s_funders;
+    /*//////////////////////////////////////////////////////////////
+                            STATE VARIABLES
+    //////////////////////////////////////////////////////////////*/
+    mapping(address funder => uint256 amount) private s_addressToAmountFunded;
+    address payable[] private s_funders;
 
-    address private immutable i_owner;
     uint256 public constant MINIMUM_USD = 5e18; // 5 dollars
     AggregatorV3Interface private s_priceFeed;
 
-    constructor(address priceFeed) Ownable(msg.sender){
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
+    event Funded(address indexed funder, uint256 amount);
+
+    constructor(address priceFeed) Ownable(msg.sender) {
         s_priceFeed = AggregatorV3Interface(priceFeed);
     }
 
     function fund() public payable {
-        if(msg.value.getConversionRate(s_priceFeed) <= MINIMUM_USD){
+        uint256 usdAmount = MINIMUM_USD.getConversionRate(s_priceFeed);
+        if (usdAmount < MINIMUM_USD) {
             revert FundMe__SpendMoreEth();
         }
+        if (s_addressToAmountFunded[msg.sender] == 0) {
+            // 0 = funder has never funded before
+            s_funders.push(payable(msg.sender));
+        }
         s_addressToAmountFunded[msg.sender] += msg.value;
-        s_funders.push(msg.sender);
+
+        emit Funded(msg.sender, msg.value);
     }
 
     function cheaperWithdraw() public onlyOwner {
+        if (address(this).balance == 0) {
+            revert FundMe__NoFundsToWithdraw();
+        }
+
         uint256 fundersLength = s_funders.length;
         for (uint256 funderIndex = 0; funderIndex < fundersLength; funderIndex++) {
             address funder = s_funders[funderIndex];
             s_addressToAmountFunded[funder] = 0;
         }
-        s_funders = new address[](0);
-        (bool callSuccess,) = payable(msg.sender).call{value: address(this).balance}("");
-        require(callSuccess, "Call failed");
+        delete s_funders;
+
+        (bool success,) = payable(msg.sender).call{value: address(this).balance}("");
+        if(!success){
+            revert FundMe__WithdrawFailed();
+        }
     }
 
     function withdraw() public onlyOwner {
@@ -68,7 +90,7 @@ contract FundMe is Ownable{
             address funder = s_funders[funderIndex];
             s_addressToAmountFunded[funder] = 0;
         }
-        s_funders = new address[](0);
+        delete s_funders;
         // // transfer
         // payable(msg.sender).transfer(address(this).balance);
 
@@ -117,7 +139,7 @@ contract FundMe is Ownable{
     }
 
     function getOwner() external view returns (address) {
-        return i_owner;
+        return msg.sender;
     }
 }
 
