@@ -12,8 +12,8 @@ library PriceConverter {
         // https://docs.chain.link/data-feeds/price-feeds/addresses
 
         (, int256 answer,,,) = priceFeed.latestRoundData();
-        // ETH/USD rate in 18 digit
-        return uint256(answer * 10000000000);
+        return uint256(answer * 10000000000); // Chainlink ETH/USD price data returns the price in 8 decimal places
+        // so multiplying by 10^10 to get it to 18 decimal places, which is the standard for ETH amounts in Solidity.
     }
 
     // 1000000000
@@ -23,4 +23,4 @@ library PriceConverter {
         // the actual ETH/USD conversion rate, after adjusting the extra 0s.
         return ethAmountInUsd;
     }
-}
+}    

@@ -26,13 +26,17 @@ pragma solidity ^0.8.28;
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {PriceConverter} from "./PriceConverter.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 error FundMe__NotOwner();
 error FundMe__SpendMoreEth();
 error FundMe__WithdrawFailed();
 error FundMe__NoFundsToWithdraw();
+error FundMe__DeadlineNotYetPleaseWait();
+error FundMe__NoRefundGoalIsMet();
+error FundMe__goalNotReached();
 
-contract FundMe is Ownable {
+contract FundMe is Ownable, ReentrancyGuard {
     using PriceConverter for uint256;
 
     /*//////////////////////////////////////////////////////////////
@@ -40,9 +44,15 @@ contract FundMe is Ownable {
     //////////////////////////////////////////////////////////////*/
     mapping(address funder => uint256 amount) private s_addressToAmountFunded;
     address payable[] private s_funders;
+    uint256 private s_totalAmountFunded;
 
-    uint256 public constant MINIMUM_USD = 5e18; // 5 dollars
+
+    uint256 public constant MINIMUM_USD = 1e18; // 1 dollars
     AggregatorV3Interface private s_priceFeed;
+
+    uint256 public immutable i_goal; // 50_000 * 1e18 (USD, 18 decimals)
+    uint256 public immutable i_deadline; 
+
 
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -51,8 +61,12 @@ contract FundMe is Ownable {
 
     constructor(address priceFeed) Ownable(msg.sender) {
         s_priceFeed = AggregatorV3Interface(priceFeed);
+        i_deadline = block.timestamp + 30 days;
     }
 
+        /*//////////////////////////////////////////////////////////////
+                         FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
     function fund() public payable {
         uint256 usdAmount = MINIMUM_USD.getConversionRate(s_priceFeed);
         if (usdAmount < MINIMUM_USD) {
@@ -64,44 +78,66 @@ contract FundMe is Ownable {
         }
         s_addressToAmountFunded[msg.sender] += msg.value;
 
+        s_totalAmountFunded += msg.value;
+
         emit Funded(msg.sender, msg.value);
     }
 
-    function cheaperWithdraw() public onlyOwner {
-        if (address(this).balance == 0) {
-            revert FundMe__NoFundsToWithdraw();
-        }
-
-        uint256 fundersLength = s_funders.length;
-        for (uint256 funderIndex = 0; funderIndex < fundersLength; funderIndex++) {
-            address funder = s_funders[funderIndex];
-            s_addressToAmountFunded[funder] = 0;
-        }
-        delete s_funders;
-
-        (bool success,) = payable(msg.sender).call{value: address(this).balance}("");
-        if(!success){
-            revert FundMe__WithdrawFailed();
-        }
+    function refund() external nonReentrant {
+        // Checks
+    if (block.timestamp < i_deadline) {
+        revert FundMe__DeadlineNotYetPleaseWait();
     }
 
-    function withdraw() public onlyOwner {
-        for (uint256 funderIndex = 0; funderIndex < s_funders.length; funderIndex++) {
-            address funder = s_funders[funderIndex];
-            s_addressToAmountFunded[funder] = 0;
-        }
-        delete s_funders;
-        // // transfer
-        // payable(msg.sender).transfer(address(this).balance);
-
-        // // send
-        // bool sendSuccess = payable(msg.sender).send(address(this).balance);
-        // require(sendSuccess, "Send failed");
-
-        // call
-        (bool callSuccess,) = payable(msg.sender).call{value: address(this).balance}("");
-        require(callSuccess, "Call failed");
+    if (s_totalAmountFunded >= i_goal) {
+        revert FundMe__NoRefundGoalIsMet();
     }
+
+    uint256 amount = s_addressToAmountFunded[msg.sender];
+
+    if (amount == 0) {
+        revert FundMe__NoFundsToWithdraw();
+    }
+
+    // Effects
+    s_addressToAmountFunded[msg.sender] = 0;
+
+    // Interaction
+    (bool success,) = payable(msg.sender).call{value: amount}("");
+    if (!success) {
+        revert FundMe__WithdrawFailed();
+    }
+}
+
+    function ownerWithdraw() external onlyOwner nonReentrant {
+    if (s_totalAmountFunded < i_goal) {
+        revert FundMe__goalNotReached(); // goal not reached
+    }
+    uint256 balance = address(this).balance;
+
+    (bool success,) = payable(msg.sender).call{value: balance}("");
+    if (!success) {
+        revert FundMe__WithdrawFailed();
+    }
+}
+
+    // function withdraw() public onlyOwner {
+    //     for (uint256 funderIndex = 0; funderIndex < s_funders.length; funderIndex++) {
+    //         address funder = s_funders[funderIndex];
+    //         s_addressToAmountFunded[funder] = 0;
+    //     }
+    //     delete s_funders;
+    // // transfer
+    // payable(msg.sender).transfer(address(this).balance);
+
+    // // send
+    // bool sendSuccess = payable(msg.sender).send(address(this).balance);
+    // require(sendSuccess, "Send failed");
+
+    // call
+    //     (bool callSuccess,) = payable(msg.sender).call{value: address(this).balance}("");
+    //     require(callSuccess, "Call failed");
+    // }
 
     // Explainer from: https://solidity-by-example.org/fallback/
     // Ether is sent to contract

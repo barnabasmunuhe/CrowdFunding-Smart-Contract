@@ -84,7 +84,7 @@ contract FundMeTest is Test {
 
         vm.prank(USER);
         vm.expectRevert();
-        fundMe.withdraw();
+        fundMe.ownerWithdraw();
     }
 
     function testWithDrawWithASingleFunder() public funded {
@@ -96,7 +96,7 @@ contract FundMeTest is Test {
         // uint256 gasStart = gasleft();//1000 //tells you how much gas is left in your tx call
         vm.txGasPrice(GAS_PRICE);
         vm.prank(fundMe.getOwner()); //c: 200
-        fundMe.withdraw(); // should have spend gas?
+        fundMe.ownerWithdraw(); // should have spend gas?
 
         // uint256 gasEnd = gasleft();//800
         // uint256 gasUsed = (gasStart - gasEnd) * tx.gasprice;
@@ -125,7 +125,7 @@ contract FundMeTest is Test {
 
         // Act
         vm.startPrank(fundMe.getOwner());
-        fundMe.withdraw();
+        fundMe.ownerWithdraw();
         vm.stopPrank();
 
         //assert
@@ -149,7 +149,7 @@ contract FundMeTest is Test {
 
         // Act
         vm.startPrank(fundMe.getOwner());
-        fundMe.cheaperWithdraw();
+        fundMe.ownerWithdraw();
         vm.stopPrank();
 
         //assert
