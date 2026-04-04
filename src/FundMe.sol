@@ -57,16 +57,19 @@ contract FundMe is Ownable, ReentrancyGuard {
     mapping(address funder => uint256 amount) private s_addressToAmountFunded;
     address payable[] private s_funders;
     uint256 private s_totalAmountFunded;
-    uint256 private s_totalWithdrawn;
-
-
-    uint256 public constant MINIMUM_USD = 1e18; // 1 dollars
+    uint256 private s_totalWithdrawnByOwner;
+    uint256 private s_platformFeesCollected;
     AggregatorV3Interface private s_priceFeed;
     FundMeState private s_state;
 
+    uint256 public constant MINIMUM_USD = 1e18; // 1 dollars
+    uint256 public constant BasisPoints = 10_000; // 100% in basis points, used for fee calculations to avoid floating point issues
+
     uint256 public immutable i_goal; // 50_000 * 1e18 (USD, 18 decimals)
     uint256 public immutable i_deadline; 
-
+    address public immutable i_feeRecipient; // can be a company wallet,multSig wallet or DAO treasury that will receive a percentage of the funds if the funding campaign fails
+    uint256 public immutable i_platformFeeBps;
+    uint256 public immutable i_refundFeeBps;
 
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -76,10 +79,14 @@ contract FundMe is Ownable, ReentrancyGuard {
     event Refunded(address indexed user, uint256 amount, uint256 fee);
 
 
-    constructor(address priceFeed, uint256 goal) Ownable(msg.sender) {
+    constructor(address priceFeed, uint256 goal, address feeRecipient, uint256 platformFeeBps, uint256 refundFeeBps) Ownable(msg.sender) {
         s_priceFeed = AggregatorV3Interface(priceFeed);
         i_deadline = block.timestamp + 30 days;
         i_goal = goal;
+
+        i_feeRecipient = feeRecipient;
+        i_platformFeeBps = platformFeeBps;
+        i_refundFeeBps = refundFeeBps;
         s_state = FundMeState.ACTIVE;
     }
 
@@ -157,16 +164,26 @@ contract FundMe is Ownable, ReentrancyGuard {
         if (amount > balance) {
             revert FundMe__InsufficientBalance(); // goal reached but not enough funds to withdraw the requested amount
         }
-    }
-    s_totalWithdrawn += amountToWithdraw; // tracking the total withdrawn amount by the owner, can be used for analytics or to set a max withdraw limit in the future
+    }    
+        // Fee Calculation
+        uint256 fee = (amountToWithdraw * i_platformFeeBps) / BasisPoints;
+        uint256 payoutAmount = amountToWithdraw - fee;
+        // tracking
+    s_totalWithdrawnByOwner += payoutAmount; // tracking the total withdrawn amount by the owner, can be used for analytics or to set a max withdraw limit in the future
+    s_platformFeesCollected += fee; // tracking the total fees collected by the platform, can be used for analytics or to set a max fee limit in the future
 
     // interaction
-    (bool success,) = payable(msg.sender).call{value: amountToWithdraw}("");
+    (bool feeTransferSuccess,) = payable(i_feeRecipient).call{value: fee}("");
+    if (!feeTransferSuccess) {
+        revert FundMe__WithdrawFailed(); // if fee transfer fails, we revert the entire transaction to ensure the owner does not receive funds without paying the fee
+    }
+
+    (bool success,) = payable(msg.sender).call{value: payoutAmount}("");
     if (!success) {
         revert FundMe__WithdrawFailed();
     }
 
-    emit OwnerWithdrawn(msg.sender, amountToWithdraw);
+    emit OwnerWithdrawn(msg.sender, payoutAmount);
 }
 
     // Explainer from: https://solidity-by-example.org/fallback/
