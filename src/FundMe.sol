@@ -94,6 +94,10 @@ contract FundMe is Ownable, ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
                          FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+    /**
+     * @notice  .
+     * @dev     .
+     */
     function fund() public payable {
         if (s_state != FundMeState.ACTIVE) {
             revert FundMe__NotActive();
@@ -119,6 +123,10 @@ contract FundMe is Ownable, ReentrancyGuard {
         emit Funded(msg.sender, msg.value);
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     */
     function refund() external nonReentrant {
         // Checks
         if (s_state == FundMeState.SUCCESS) {
@@ -157,6 +165,11 @@ contract FundMe is Ownable, ReentrancyGuard {
         emit Refunded(msg.sender, refundAmount, fee);
     }
 
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   amount  .
+     */
     function ownerWithdraw(uint256 amount) external onlyOwner nonReentrant {
         // checks
         if (s_state != FundMeState.SUCCESS) {
@@ -256,12 +269,3 @@ contract FundMe is Ownable, ReentrancyGuard {
         return s_totalWithdrawnByOwner;
     }
 }
-
-// Concepts we didn't cover yet (will cover in later sections)
-// 1. Enum
-// 2. Events
-// 3. Try / Catch
-// 4. Function Selector
-// 5. abi.encode / decode
-// 6. Hash with keccak256
-// 7. Yul / Assembly
