@@ -1,0 +1,110 @@
+Compiling 34 files with Solc 0.8.33
+Solc 0.8.33 finished in 1.72s
+Compiler run successful with warnings:
+Warning (3420): Source file does not specify required compiler version! Consider adding "pragma solidity ^0.8.33;"
+--> script/DeployFundMe.s.sol
+
+Warning (3420): Source file does not specify required compiler version! Consider adding "pragma solidity ^0.8.33;"
+--> script/HelperConfig.s.sol
+
+Warning (3420): Source file does not specify required compiler version! Consider adding "pragma solidity ^0.8.33;"
+--> script/Interactions.s.sol
+
+Warning (3420): Source file does not specify required compiler version! Consider adding "pragma solidity ^0.8.33;"
+--> test/integration/InteractionsTests.t.sol
+
+Warning (2072): Unused local variable.
+   --> test/unit/FundMeTest.t.sol:181:9:
+    |
+181 |         uint256 contractBalanceBefore = address(fundMe).balance;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Warning (2072): Unused local variable.
+   --> test/unit/FundMeTest.t.sol:201:9:
+    |
+201 |         uint256 contractBalanceBefore = address(fundMe).balance;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Warning (2072): Unused local variable.
+   --> test/unit/FundMeTest.t.sol:308:9:
+    |
+308 |         uint256 amountFunded = fundMe.getAddressToAmountFunded(USER);
+    |         ^^^^^^^^^^^^^^^^^^^^
+
+Warning (2018): Function state mutability can be restricted to view
+  --> test/unit/FundMeTest.t.sol:55:5:
+   |
+55 |     function testInitialStateIsActive() public {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+  --> test/unit/FundMeTest.t.sol:59:5:
+   |
+59 |     function testMinimumDollarIsFive() public {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/unit/FundMeTest.t.sol:109:5:
+    |
+109 |     function testPriceFeedVersion() public {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to pure
+   --> test/unit/FundMeTest.t.sol:456:5:
+    |
+456 |     function getExpectedRefund(uint256 amount) internal view returns (uint256 fee, uint256 refund) {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Analysing contracts...
+Running tests...
+
+Ran 34 tests for test/unit/FundMeTest.t.sol:FundMeTest
+[PASS] testAddsFunderToArrayOfFunders() (gas: 127500)
+[PASS] testCannotRefundBeforeDeadline() (gas: 132763)
+[PASS] testCannotRefundIfGoalReached() (gas: 135629)
+[PASS] testCannotRefundIfUserNeverFunded() (gas: 21869)
+[PASS] testCannotRefundTwice() (gas: 183597)
+[PASS] testFallbackFunctionTriggersFund() (gas: 127130)
+[PASS] testFeeRecipientIsSet() (gas: 8101)
+[PASS] testFundFailsWithoutEnoughETH() (gas: 25168)
+[PASS] testFundRevertsIfBelowMinimum() (gas: 34582)
+[PASS] testFundUpdatesFundedMapping() (gas: 127108)
+[PASS] testGoalIsSetCorrectly() (gas: 5969)
+[PASS] testGoalReachedChangesState() (gas: 129779)
+[PASS] testInitialStateIsActive() (gas: 8198)
+[PASS] testMinimumDollarIsFive() (gas: 5861)
+[PASS] testMultipleFunders() (gas: 191330)
+[PASS] testMultipleUsersRefundCorrectly() (gas: 248928)
+[PASS] testOnlyOwnerCanWithdrawFunds() (gas: 129827)
+[PASS] testOwnerIsMsgSender() (gas: 8187)
+[PASS] testOwnerWithdrawZeroAmountUsesFullBalance() (gas: 225688)
+[PASS] testPartialWithdrawWorks() (gas: 223760)
+[PASS] testPriceFeedVersion() (gas: 11417)
+[PASS] testReceiveFunctionTriggersFund() (gas: 127110)
+[PASS] testRefundAtExactDeadline() (gas: 178517)
+[PASS] testRefundDeductsCorrectFee() (gas: 183781)
+[PASS] testRefundFailsIfFeeTransferFails() (gas: 2222920)
+[PASS] testRefundUpdatesContractBalanceCorrectly() (gas: 185021)
+[PASS] testRefundWorksAfterFailure() (gas: 182135)
+[PASS] testViewFunctionsReturnCorrectState() (gas: 129522)
+[PASS] testWithdrawExactFeeAndPayout() (gas: 227887)
+[PASS] testWithdrawFailsIfFeeTransferFails() (gas: 2263320)
+[PASS] testWithdrawRevertsIfAmountTooHigh() (gas: 138486)
+[PASS] testWithdrawRevertsIfNotSuccessful() (gas: 134849)
+[PASS] testWithdrawWorks() (gas: 224161)
+[PASS] testWithdrawWorksWithFullSystemLogic() (gas: 226896)
+Suite result: ok. 34 passed; 0 failed; 0 skipped; finished in 34.22ms (87.78ms CPU time)
+
+Ran 1 test suite in 39.07ms (34.22ms CPU time): 34 tests passed, 0 failed, 0 skipped (34 total tests)
+
+╭----------------------------+----------------+----------------+----------------+----------------╮
+| File                       | % Lines        | % Statements   | % Branches     | % Funcs        |
++================================================================================================+
+| src/FundMe.sol             | 88.10% (74/84) | 91.46% (75/82) | 75.00% (12/16) | 80.00% (12/15) |
+|----------------------------+----------------+----------------+----------------+----------------|
+| src/PriceConverter.sol     | 100.00% (7/7)  | 100.00% (8/8)  | 100.00% (0/0)  | 100.00% (2/2)  |
+|----------------------------+----------------+----------------+----------------+----------------|
+| test/unit/FundMeTest.t.sol | 100.00% (2/2)  | 100.00% (1/1)  | 100.00% (0/0)  | 100.00% (1/1)  |
+|----------------------------+----------------+----------------+----------------+----------------|
+| Total                      | 89.25% (83/93) | 92.31% (84/91) | 75.00% (12/16) | 83.33% (15/18) |
+╰----------------------------+----------------+----------------+----------------+----------------╯
