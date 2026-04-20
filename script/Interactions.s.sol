@@ -1,40 +1,66 @@
-// // SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 
-// // Fund
-// // Withdraw
+// Fund
+// Withdraw
 
-// pragma solidity ^0.8.28;
+pragma solidity ^0.8.28;
 
-// import {Script, console} from "forge-std/Script.sol";
-// import {DevOpsTools} from "foundry-devops/src/DevOpsTools.sol"; //install ChainAccelOrg/foundry-devops
-// import {FundMe} from "../src/FundMe.sol";
+import {Script, console} from "forge-std/Script.sol";
+import {DevOpsTools} from "foundry-devops/src/DevOpsTools.sol"; //install ChainAccelOrg/foundry-devops
+import {FundMe} from "../src/FundMe.sol";
 
-// contract FundFundMe is Script {
-//     uint256 constant SEND_VALUE = 0.01 ether;
+/*//////////////////////////////////////////////////////////////
+                      FUND SCRIPT
+//////////////////////////////////////////////////////////////*/
 
-//     function fundFundMe(address mostRecentlydeployed) public {
-//         FundMe(payable(mostRecentlydeployed)).fund{value: SEND_VALUE}();
-//         console.log("Funded Fundme with %s", SEND_VALUE);
-//     }
+contract FundFundMe is Script {
+    uint256 constant SEND_VALUE = 0.5 ether;
 
-//     function run() external {
-//         address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("FundMe", block.chainid);
-//         vm.startBroadcast();
-//         fundFundMe(mostRecentlyDeployed);
-//         vm.stopBroadcast();
-//     }
-// }
+    function fundFundMe(address mostRecentlydeployedFundMeAddress) public {
+        FundMe(payable(mostRecentlydeployedFundMeAddress)).fund{value: SEND_VALUE}();
+        console.log("Funded Fundme with :", SEND_VALUE);
+    }
 
-// contract withdrawFundMe is Script {
-//     function withdrawfundMe(address mostRecentlydeployed) public {
-//         vm.startBroadcast();
-//         FundMe(payable(mostRecentlydeployed)).ownerWithdraw();
-//         vm.stopBroadcast();
-//     }
+    function run() external {
+        address mostRecentlyDeployedContract = DevOpsTools.get_most_recent_deployment("FundMe", block.chainid);
+        vm.startBroadcast();
+        fundFundMe(mostRecentlyDeployedContract);
+        vm.stopBroadcast();
+    }
+}
 
-//     function run() external view {
-//         address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("FundMe", block.chainid);
+/*//////////////////////////////////////////////////////////////
+                      WITHDRAW SCRIPT
+//////////////////////////////////////////////////////////////*/
 
-//         withdrawFundMe(mostRecentlyDeployed);
-//     }
-// }
+contract withdraw is Script {
+    function withdrawFundMe(address mostRecentlydeployed) public {
+        FundMe(payable(mostRecentlydeployed)).ownerWithdraw(0); //pass an amount if needed
+    }
+
+    function run() external {
+        address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("FundMe", block.chainid);
+        vm.startBroadcast();
+        withdrawFundMe(mostRecentlyDeployed);
+        vm.stopBroadcast();
+    }
+}
+
+/*//////////////////////////////////////////////////////////////
+                      REFUND SCRIPT
+//////////////////////////////////////////////////////////////*/
+
+contract RefundFundMe is Script {
+    function refundFundMe(address fundMeAddress) public {
+        FundMe(payable(fundMeAddress)).refund();
+        console.log("Refund executed");
+    }
+
+    function run() external {
+        address mostRecent = DevOpsTools.get_most_recent_deployment("FundMe", block.chainid);
+
+        vm.startBroadcast();
+        refundFundMe(mostRecent);
+        vm.stopBroadcast();
+    }
+}

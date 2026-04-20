@@ -82,7 +82,7 @@ contract FundMeTest is Test {
 
     function testFallbackFunctionTriggersFund() public {
         vm.prank(USER3);
-        (bool success,) = address(fundMe).call{value: 2 ether}("");
+        (bool success,) = address(fundMe).call{value: 2 ether}("0x1234"); // sending data that doesn't match any function signature should trigger the fallback function, which should also fund the contract
 
         assertTrue(success);
         assertEq(fundMe.getAddressToAmountFunded(USER3), 2 ether);
@@ -94,7 +94,23 @@ contract FundMeTest is Test {
         assertGt(fundMe.getDeadline(), block.timestamp);
     }
 
-    // Funding Tests
+    // function testFallbackReentrancyDoesNotBreakAccounting() public {
+    // MaliciousFunder attacker = new MaliciousFunder(address(fundMe));
+
+    // vm.deal(address(attacker), 5 ether);
+
+    // vm.prank(address(attacker));
+    // attacker.attack{value: 1 ether}();
+
+    // // Assert
+    // uint256 fundedAmount = fundMe.getAddressToAmountFunded(address(attacker));
+
+    // // Should reflect actual contributions, not corrupted
+    // assertGt(fundedAmount, 0);
+
+    // // Ensure contract balance is consistent
+    // assertEq(address(fundMe).balance, fundedAmount);
+    // }
 
     // function testPriceFeedVersionIsAccurate() public view {
     //     if (block.chainid == 11155111) {
@@ -106,6 +122,7 @@ contract FundMeTest is Test {
     //     }
     // }
 
+    // Funding Tests
     function testPriceFeedVersion() public {
         uint256 version = fundMe.getVersion();
         assertEq(version, 0);
@@ -474,3 +491,22 @@ contract RevertingReceiver {
         revert RevertingReceiver__RevertOnReceive();
     }
 }
+
+// contract MaliciousFunder {
+//     FundMe public payable fundMe;
+
+//     constructor(address _fundMe) {
+//         fundMe = FundMe(_fundMe);
+//     }
+
+//     receive() external payable {
+//         // Try re-entering fund again (recursive funding)
+//         if (address(fundMe).balance < 10 ether) {
+//             fundMe.fund{value: 1 ether}();
+//         }
+//     }
+
+//     function attack() external payable {
+//         fundMe.fund{value: msg.value}();
+//     }
+// }
