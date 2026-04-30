@@ -10,6 +10,36 @@ This project goes beyond basics — it demonstrates:
 
 ---
 
+# 📚 Table of Contents
+
+- [💼 Why This Project Stands Out](#-why-this-project-stands-out)
+- [📁 Project Structure](#-project-structure)
+- [⚙️ Getting Started](#️-getting-started)
+  - [Requirements](#requirements)
+  - [Clone & Build](#clone--build)
+- [🚀 Deploying Contracts](#-deploying-contracts)
+  - [🧪 Local Deployment](#-local-deployment)
+  - [🌐 Testnet Deployment (Sepolia)](#-testnet-deployment-sepolia)
+- [🧪 Running Tests](#-running-tests)
+- [🧠 Core Contract Logic](#-core-contract-logic)
+  - [🔄 State Machine](#-state-machine)
+  - [💰 Fee Model](#-fee-model)
+  - [🔐 Security Considerations](#-security-considerations)
+- [🔗 Chainlink Integration](#-chainlink-integration)
+- [📜 Example Interactions](#-example-interactions)
+- [🧪 Testing Philosophy](#-testing-philosophy)
+- [🛡️ Audit Awareness](#️-audit-awareness)
+- [🧠 Concepts Covered](#-concepts-covered)
+- [🔍 Upcoming Enhancements](#-upcoming-enhancements)
+- [🎯 What This Project Proves](#-what-this-project-proves)
+- [🧑‍💻 About](#-about)
+- [📌 Notes](#-notes)
+- [🧠 License](#-license)
+- [⭐ Support](#-support)
+- [🙏 Acknowledgment](#-acknowledgment)
+
+---
+
 ## 💼 Why This Project Stands Out
 
 Most crowdfunding contracts stop at “fund & withdraw”.
