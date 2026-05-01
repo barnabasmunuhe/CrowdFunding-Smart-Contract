@@ -8,13 +8,16 @@ contract Handler is Test {
     FundMe public fundMe;
 
     address[] public users;
+    // shadow accounting variables to track expected state
     uint256 public totalFunded;
     uint256 public totalWithdrawn;
-    mapping(address => uint256) public userBalances;
-    mapping(address => uint256) public totalRefunded;
     uint256 public totalPlatformFees;
 
+    mapping(address => uint256) public userBalances;
+    mapping(address => uint256) public totalRefunded;
+
     uint256 constant MIN = 0.0025 ether;
+    uint256 public constant BasisPoints = 10_000; // 100% in basis points, used for fee calculations to avoid floating point issues
 
     constructor(FundMe _fundMe) {
         fundMe = _fundMe;
@@ -29,7 +32,7 @@ contract Handler is Test {
     // ----------------------
 
     function fund(uint256 amount, uint256 userIndex) public {
-        address user = users[userIndex % users.length];
+        address user = users[userIndex % users.length]; //multi user simulation
 
         amount = bound(amount, MIN, 5 ether);
 
@@ -62,19 +65,31 @@ contract Handler is Test {
         } catch {}
     }
 
-    function withdraw() public {
+    function withdraw(uint256 amount) public {
         address owner = fundMe.getOwner();
         uint256 balance = address(fundMe).balance;
 
+        // Nothing to withdraw
+        if (balance == 0) revert FundMe.FundMe__NoFundsToWithdraw();
+
+        // allow partial OR full withdraw (0 means full withdrawal)
+        amount = bound(amount, 0, balance);
+
         vm.prank(owner);
-        try fundMe.ownerWithdraw(0) {
-            uint256 fee = (balance * fundMe.i_platformFeeBps()) / 10_000;
-            uint256 payout = balance - fee;
+        try fundMe.ownerWithdraw(amount) {
+            totalWithdrawn = amount == 0 ? balance : amount; //if withdraw amount is 0, withdraw full balance, otherwise withdraw specified amount
+
+            uint256 fee = (totalWithdrawn * fundMe.i_platformFeeBps()) / BasisPoints;
+            uint256 payout = totalWithdrawn - fee;
 
             totalWithdrawn += payout;
             totalPlatformFees += fee;
 
-            totalFunded = 0; // reset total funded after withdrawal
+            if (totalFunded >= totalWithdrawn) {
+                totalFunded -= totalWithdrawn; // decrease total funded by the withdrawn amount, fee is kept by contract
+            } else {
+                totalFunded = 0;
+            }
         } catch {}
     }
 }

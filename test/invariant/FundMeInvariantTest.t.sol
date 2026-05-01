@@ -28,7 +28,66 @@ contract FundMeInvariantTest is StdInvariant, Test {
         targetContract(address(handler));
     }
 
-    function invariant_balanceMatchesHandler() public view {
+    function invariant_contractBalanceMatchesHandler() public view {
         assertEq(address(fundMe).balance, handler.totalFunded());
+    }
+
+    function invariant_FeesAccumulateCorrectly() public view {
+        uint256 contractFees = fundMe.getPlatformFeesCollected();
+
+        assertEq(contractFees, handler.totalPlatformFees());
+    }
+
+    function invariant_NoNegativeAccounting() public view {
+        assertGe(handler.totalFunded(), 0);
+        assertGe(handler.totalWithdrawn(), 0);
+        assertGe(handler.totalPlatformFees(), 0);
+    }
+
+    function invariant_WithdrawNeverExceedsFunding() public view {
+        assertLe(handler.totalWithdrawn(), handler.totalFunded() + handler.totalWithdrawn());
+    }
+
+    function invariant_UserBalancesAreValid() public view {
+        address user1 = handler.users(0);
+        address user2 = handler.users(1);
+        address user3 = handler.users(2);
+
+        assertGe(handler.userBalances(user1), 0);
+        assertGe(handler.userBalances(user2), 0);
+        assertGe(handler.userBalances(user3), 0);
+    }
+
+    function invariant_ContractBalanceNeverNegative() public view {
+        assertGe(address(fundMe).balance, 0);
+    }
+
+    function invariant_ValueConservation() public view {
+        uint256 contractBalance = address(fundMe).balance;
+
+        uint256 totalOut = handler.totalWithdrawn() + handler.totalPlatformFees();
+
+        uint256 totalIn = handler.totalFunded() + totalOut;
+
+        assertEq(contractBalance + totalOut, totalIn);
+    }
+
+    function invariant_RefundAccountingMatches() public view {
+        address user1 = handler.users(0);
+        address user2 = handler.users(1);
+        address user3 = handler.users(2);
+
+        uint256 totalRefunded = handler.totalRefunded(user1) + handler.totalRefunded(user2)
+            + handler.totalRefunded(user3);
+
+        assertGe(handler.totalFunded(), 0);
+        assertGe(totalRefunded, 0);
+    }
+
+    function invariant_SystemIntegrity() public view {
+        invariant_contractBalanceMatchesHandler();
+        invariant_FeesAccumulateCorrectly();
+        invariant_ValueConservation();
+        invariant_WithdrawNeverExceedsFunding();
     }
 }

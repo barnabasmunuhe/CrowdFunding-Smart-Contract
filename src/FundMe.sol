@@ -28,19 +28,19 @@ import {PriceConverter} from "./PriceConverter.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-error FundMe__NotOwner();
-error FundMe__SpendMoreEth();
-error FundMe__WithdrawFailed();
-error FundMe__NoFundsToWithdraw();
-error FundMe__DeadlineNotYetPleaseWait();
-error FundMe__NotSuccessful();
-error FundMe__goalReached();
-error FundMe__NotActive();
-error FundMe__InsufficientBalance();
-error FundMe__RefundFailed();
-
 contract FundMe is Ownable, ReentrancyGuard {
     using PriceConverter for uint256;
+
+    error FundMe__NotOwner();
+    error FundMe__SpendMoreEth();
+    error FundMe__WithdrawFailed();
+    error FundMe__NoFundsToWithdraw();
+    error FundMe__DeadlineNotYetPleaseWait();
+    error FundMe__NotSuccessful();
+    error FundMe__goalReached();
+    error FundMe__NotActive();
+    error FundMe__InsufficientBalance();
+    error FundMe__RefundFailed();
 
     /*//////////////////////////////////////////////////////////////
                            TYPE DECLARATIONS
